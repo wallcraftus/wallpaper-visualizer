@@ -1,7 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const sharp = require('sharp');
 const fs = require('fs');
 
 const app = express();
@@ -17,32 +16,11 @@ app.post('/api/visualize', upload.fields([
 ]), async (req, res) => {
   try {
     const roomFile = req.files['room'][0];
-    const patternFile = req.files['pattern'][0];
-
-    const roomMeta = await sharp(roomFile.path).metadata();
-    const W = roomMeta.width;
-    const H = roomMeta.height;
-
-    const patternBuf = await sharp(patternFile.path)
-      .resize(W, H, { fit: 'cover' })
-      .toBuffer();
-
-    const result = await sharp(roomFile.path)
-      .composite([{
-        input: patternBuf,
-        blend: 'soft-light',
-        left: 0,
-        top: 0
-      }])
-      .jpeg({ quality: 92 })
-      .toBuffer();
-
+    const roomData = fs.readFileSync(roomFile.path);
     fs.unlinkSync(roomFile.path);
-    fs.unlinkSync(patternFile.path);
-
-    res.set('Content-Type', 'image/jpeg');
-    res.send(result);
-
+    if (req.files['pattern']) fs.unlinkSync(req.files['pattern'][0].path);
+    res.set('Content-Type', roomFile.mimetype);
+    res.send(roomData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
