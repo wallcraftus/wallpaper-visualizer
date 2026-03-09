@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Odanda Gör</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+  h1 { color: #8b6f47; }
+  .upload-area { border: 2px dashed #ccc; padding: 30px; text-align: center; margin: 20px 0; border-radius: 8px; }
+  button { background: #8b6f47; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+  button:hover { background: #6d5535; }
+  #result { margin-top: 30px; }
+  #result img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .loading { display: none; text-align: center; padding: 20px; color: #8b6f47; }
+</style>
+</head>
+<body>
+<h1>🏠 Odanda Gör</h1>
+<p>Oda fotoğrafınızı ve deseninizi yükleyin, duvarınızda nasıl göründüğünü anında görün!</p>
+
+<div class="upload-area">
+  <h3>📷 Oda Fotoğrafı</h3>
+  <input type="file" id="roomInput" accept="image/*">
+</div>
+
+<div class="upload-area">
+  <h3>🎨 Duvar Kağıdı Deseni</h3>
+  <input type="file" id="patternInput" accept="image/*">
+</div>
+
+<button onclick="visualize()">✨ Odamda Göster!</button>
+
+<div class="loading" id="loading">
+  <p>⏳ AI duvarınızı analiz ediyor... (10-20 saniye)</p>
+</div>
+
+<div id="result"></div>
+
+<script>
+async function visualize() {
+  const roomFile = document.getElementById('roomInput').files[0];
+  const patternFile = document.getElementById('patternInput').files[0];
+  
+  if (!roomFile || !patternFile) {
+    alert('Lütfen hem oda fotoğrafı hem de desen seçin!');
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').innerHTML = '';
+
+  const formData = new FormData();
+  formData.append('room', roomFile);
+  formData.append('pattern', patternFile);
+
+  try {
+    const response = await fetch('/api/visualize', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) throw new Error('Sunucu hatası');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    
+    document.getElementById('result').innerHTML = 
+      `<h3>✅ Sonuç:</h3><img src="${url}">`;
+  } catch (error) {
+    document.getElementById('result').innerHTML = 
+      `<p style="color:red">Hata: ${error.message}</p>`;
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
